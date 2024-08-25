@@ -29,7 +29,7 @@ pipeline {
                     // Set the environment variable for the Slack token and run the backup script
                     sh '''
                     export SLACK_TOKEN=${SLACK_TOKEN}
-                    python3 backup_script.py
+                    python3 main.py
                     '''
                 }
             }
