@@ -60,7 +60,7 @@ def save_backup(channel_name, new_messages):
     os.makedirs(channel_dir, exist_ok=True)
     
     existing_messages = fetch_existing_messages(channel_name)
-    all_messages = existing_messages + new_messages
+    all_messages = new_messages + existing_messages  # New messages come first
     
     # Remove duplicates based on timestamp or any unique identifier if needed
     seen_message_ids = set()
@@ -70,6 +70,9 @@ def save_backup(channel_name, new_messages):
         if message_id not in seen_message_ids:
             seen_message_ids.add(message_id)
             unique_messages.append(message)
+    
+    # Sort messages by timestamp in descending order
+    unique_messages.sort(key=lambda msg: float(msg.get('ts', 0)), reverse=True)
     
     # Save combined unique messages
     message_file_path = os.path.join(channel_dir, "messages.json")
