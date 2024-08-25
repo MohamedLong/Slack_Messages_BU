@@ -38,7 +38,7 @@ def fetch_messages(channel_id):
         if data.get('ok'):
             for message in data.get('messages', []):
                 # Fetch replies for each message
-                replies = fetch_replies(channel_id, message['ts'])
+                replies = fetch_replies(channel_id, message.get('thread_ts'))
                 message['replies'] = replies
                 messages.append(message)
             if data.get('response_metadata') and data['response_metadata'].get('next_cursor'):
@@ -52,6 +52,8 @@ def fetch_messages(channel_id):
     return messages
 
 def fetch_replies(channel_id, thread_ts):
+    if not thread_ts:
+        return []
     params = {
         'channel': channel_id,
         'ts': thread_ts,
@@ -119,6 +121,11 @@ def download_file(file_info, channel_name):
     file_name = file_info['name']
     file_path = os.path.join("BU", channel_name, file_name)
     
+    # Check if the file already exists
+    if os.path.exists(file_path):
+        print(f"File already exists: {file_path}")
+        return
+
     # To access private files, we need to include the token in the headers
     headers_with_token = {'Authorization': f'Bearer {slack_token}'}
     
