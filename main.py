@@ -8,6 +8,7 @@ slack_token = os.getenv('SLACK_TOKEN')
 if not slack_token:
     raise ValueError("SLACK_TOKEN environment variable not set")
 
+# API endpoints
 list_url = 'https://slack.com/api/conversations.list'
 history_url = 'https://slack.com/api/conversations.history'
 replies_url = 'https://slack.com/api/conversations.replies'
@@ -192,7 +193,7 @@ def main():
         channel_id = dm_channel['id']
         user_id = dm_channel.get('user', 'direct_message')
         user_name = fetch_user_info(user_id)
-        channel_name = f"DMs\{user_name}"  # Use the user's name for easier identification
+        channel_name = f"DMs/{user_name}"  # Use the user's name for easier identification
         print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
         new_messages = fetch_messages(channel_id)
         save_backup(channel_name, new_messages)
