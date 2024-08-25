@@ -46,10 +46,40 @@ def fetch_messages(channel_id):
             break
     return messages
 
+def download_file(file_info, channel_name):
+    file_url = file_info.get('url_private')
+    if not file_url:
+        return
+    
+    headers = {
+        'Authorization': f'Bearer {slack_token}',
+    }
+    
+    response = requests.get(file_url, headers=headers)
+    
+    if response.status_code == 200:
+        # Determine file extension
+        file_extension = os.path.splitext(file_info.get('name', ''))[1]
+        if not file_extension:
+            file_extension = '.bin'  # Default if no extension found
+        
+        # Create directory for channel media if it doesn't exist
+        media_dir = f"BU/{channel_name}_media"
+        os.makedirs(media_dir, exist_ok=True)
+        
+        # Save file
+        file_path = os.path.join(media_dir, f"{file_info['id']}{file_extension}")
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+        print(f"Downloaded: {file_path}")
+    else:
+        print(f"Failed to download file: {file_info['name']}")
+
 def save_backup(channel_name, messages):
     filename = f"BU/{channel_name}.json"
     with open(filename, 'w') as f:
         json.dump(messages, f, indent=2)
+    print(f"Backup saved to {filename}")
 
 def main():
     channels = fetch_channels()
@@ -62,10 +92,14 @@ def main():
             print(f"Fetching messages for channel: {channel_name} ({channel_id})")
             messages = fetch_messages(channel_id)
             save_backup(channel_name, messages)
+            
+            # Download media files if any
+            for message in messages:
+                if 'files' in message:
+                    for file_info in message['files']:
+                        download_file(file_info, channel_name)
         else:
             print(f"Skipping channel: {channel_name}")
-
-# if ready to fetch all channels later just remove the condition inside the loop. 
 
 if __name__ == "__main__":
     main()
