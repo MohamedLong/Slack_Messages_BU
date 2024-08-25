@@ -47,10 +47,7 @@ def fetch_messages(channel_id):
             else:
                 break
         else:
-            if data.get('error') == 'not_in_channel':
-                print(f"Error: The app or token is not in the channel with ID {channel_id}")
-            else:
-                print("Error fetching messages:", data.get('error'))
+            handle_error(data.get('error'), channel_id)
             break
     return messages
 
@@ -74,20 +71,25 @@ def fetch_replies(channel_id, thread_ts):
             else:
                 break
         else:
-            if data.get('error') == 'not_in_channel':
-                print(f"Error: The app or token is not in the channel with ID {channel_id}")
-            else:
-                print("Error fetching replies:", data.get('error'))
+            handle_error(data.get('error'), channel_id)
             break
     return replies
 
-def check_app_interactions(channel_id):
-    messages = fetch_messages(channel_id)
-    for message in messages:
-        # Check if the app's interactions are present
-        if 'text' in message and 'Message Backup App' in message['text']:
-            return True
-    return False
+def handle_error(error, channel_id):
+    if error == 'not_in_channel':
+        print(f"Error: The app or token is not integrated into the channel with ID {channel_id}")
+    else:
+        print("Error:", error)
+
+def check_app_integration(channel_id):
+    response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}', headers=headers)
+    data = response.json()
+    
+    if data.get('ok') and data.get('channel', {}).get('is_member'):
+        return True
+    else:
+        print(f"App not integrated or not a member of the channel with ID {channel_id}")
+        return False
 
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
@@ -157,12 +159,12 @@ def main():
     for channel in channels:
         channel_id = channel['id']
         channel_name = channel['name']
-        if check_app_interactions(channel_id):
+        if check_app_integration(channel_id):
             print(f"Fetching messages for channel: {channel_name} ({channel_id})")
             new_messages = fetch_messages(channel_id)
             save_backup(channel_name, new_messages)
         else:
-            print(f"App not interacting in channel: {channel_name} ({channel_id})")
+            print(f"App not integrated in channel: {channel_name} ({channel_id})")
 
 if __name__ == "__main__":
     main()
