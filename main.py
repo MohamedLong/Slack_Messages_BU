@@ -47,7 +47,10 @@ def fetch_messages(channel_id):
             else:
                 break
         else:
-            print("Error fetching messages:", data.get('error'))
+            if data.get('error') == 'not_in_channel':
+                print(f"Error: The app or token is not in the channel with ID {channel_id}")
+            else:
+                print("Error fetching messages:", data.get('error'))
             break
     return messages
 
@@ -71,7 +74,10 @@ def fetch_replies(channel_id, thread_ts):
             else:
                 break
         else:
-            print("Error fetching replies:", data.get('error'))
+            if data.get('error') == 'not_in_channel':
+                print(f"Error: The app or token is not in the channel with ID {channel_id}")
+            else:
+                print("Error fetching replies:", data.get('error'))
             break
     return replies
 
