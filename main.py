@@ -17,11 +17,7 @@ headers = {
 
 def fetch_channels():
     response = requests.get(list_url, headers=headers)
-    print("Response status code:", response.status_code)  # Debugging line
-
     data = response.json()
-    print("Response data:", data)  # Debugging line
-
     if data.get('ok'):
         return data.get('channels', [])
     else:
@@ -54,16 +50,22 @@ def save_backup(channel_name, messages):
     filename = f"BU/{channel_name}.json"
     with open(filename, 'w') as f:
         json.dump(messages, f, indent=2)
-    print(f"Backup saved to {filename}")
 
 def main():
     channels = fetch_channels()
     for channel in channels:
         channel_id = channel['id']
         channel_name = channel['name']
-        print(f"Fetching messages for channel: {channel_name} ({channel_id})")
-        messages = fetch_messages(channel_id)
-        save_backup(channel_name, messages)
+        
+        # Only fetch messages for the "teamway" channel
+        if channel_name == "teamway":
+            print(f"Fetching messages for channel: {channel_name} ({channel_id})")
+            messages = fetch_messages(channel_id)
+            save_backup(channel_name, messages)
+        else:
+            print(f"Skipping channel: {channel_name}")
+
+# if ready to fetch all channels later just remove the condition inside the loop. 
 
 if __name__ == "__main__":
     main()
