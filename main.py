@@ -82,16 +82,6 @@ def handle_error(error, channel_id):
     else:
         print("Error:", error)
 
-def check_app_integration(channel_id):
-    response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}', headers=headers)
-    data = response.json()
-    
-    if data.get('ok') and data.get('channel', {}).get('is_member'):
-        return True
-    else:
-        print(f"App not integrated or not a member of the channel with ID {channel_id}")
-        return False
-
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
     message_file_path = os.path.join(channel_dir, "messages.json")
@@ -177,13 +167,11 @@ def main():
     dm_channels = fetch_channels(types='im')
     for dm_channel in dm_channels:
         channel_id = dm_channel['id']
-        channel_name = dm_channel.get('user', 'direct_message')
-        if check_app_integration(channel_id):
-            print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
-            new_messages = fetch_messages(channel_id)
-            save_backup(channel_name, new_messages)
-        else:
-            print(f"App not integrated in direct message channel: {channel_name} ({channel_id})")
+        user_id = dm_channel.get('user', 'direct_message')
+        channel_name = f"dm_{user_id}"  # Use user_id to uniquely identify DM channels
+        print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
+        new_messages = fetch_messages(channel_id)
+        save_backup(channel_name, new_messages)
 
 if __name__ == "__main__":
     main()
