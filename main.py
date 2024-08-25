@@ -11,7 +11,6 @@ if not slack_token:
 list_url = 'https://slack.com/api/conversations.list'
 history_url = 'https://slack.com/api/conversations.history'
 replies_url = 'https://slack.com/api/conversations.replies'
-user_info_url = 'https://slack.com/api/users.info'
 headers = {
     'Authorization': f'Bearer {slack_token}',
     'Content-Type': 'application/json',
@@ -21,7 +20,9 @@ def fetch_channels(types='public_channel,private_channel'):
     params = {'types': types}
     response = requests.get(list_url, headers=headers, params=params)
     data = response.json()
-
+    
+    print("Fetch Channels Response:", json.dumps(data, indent=2))  # Debug output
+    
     if data.get('ok'):
         return data.get('channels', [])
     else:
@@ -37,6 +38,7 @@ def fetch_messages(channel_id):
     while True:
         response = requests.get(history_url, headers=headers, params=params)
         data = response.json()
+        print(f"Fetch Messages Response for {channel_id}:", json.dumps(data, indent=2))  # Debug output
         if data.get('ok'):
             for message in data.get('messages', []):
                 # Fetch replies for each message
@@ -65,6 +67,7 @@ def fetch_replies(channel_id, thread_ts):
     while True:
         response = requests.get(replies_url, headers=headers, params=params)
         data = response.json()
+        print(f"Fetch Replies Response for {thread_ts}:", json.dumps(data, indent=2))  # Debug output
         if data.get('ok'):
             replies.extend(data.get('messages', []))
             if data.get('response_metadata') and data['response_metadata'].get('next_cursor'):
@@ -87,20 +90,13 @@ def check_app_integration(channel_id):
     response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}', headers=headers)
     data = response.json()
     
+    print(f"Check App Integration Response for {channel_id}:", json.dumps(data, indent=2))  # Debug output
+    
     if data.get('ok') and data.get('channel', {}).get('is_member'):
         return True
     else:
         print(f"App not integrated or not a member of the channel with ID {channel_id}")
         return False
-
-def fetch_user_name(user_id):
-    response = requests.get(f'{user_info_url}?user={user_id}', headers=headers)
-    data = response.json()
-    if data.get('ok'):
-        return data.get('user', {}).get('name', 'unknown_user')
-    else:
-        print(f"Error fetching user info for user_id {user_id}: {data.get('error')}")
-        return 'unknown_user'
 
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
@@ -188,8 +184,7 @@ def main():
     for dm_channel in dm_channels:
         channel_id = dm_channel['id']
         user_id = dm_channel.get('user', 'direct_message')
-        user_name = fetch_user_name(user_id)
-        channel_name = f"dm_{user_name}"  # Use user_name for DM channels
+        channel_name = f"dm_{user_id}"  # Use user_id to uniquely identify DM channels
         print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
         new_messages = fetch_messages(channel_id)
         save_backup(channel_name, new_messages)
