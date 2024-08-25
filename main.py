@@ -192,7 +192,7 @@ def main():
         channel_id = dm_channel['id']
         user_id = dm_channel.get('user', 'direct_message')
         user_name = fetch_user_info(user_id)
-        channel_name = f"dm_{user_name}"  # Use the user's name for easier identification
+        channel_name = f"{user_name}"  # Use the user's name for easier identification
         print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
         new_messages = fetch_messages(channel_id)
         save_backup(channel_name, new_messages)
