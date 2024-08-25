@@ -82,6 +82,16 @@ def handle_error(error, channel_id):
     else:
         print("Error:", error)
 
+def check_app_integration(channel_id):
+    response = requests.get(f'https://slack.com/api/conversations.info?channel={channel_id}', headers=headers)
+    data = response.json()
+    
+    if data.get('ok') and data.get('channel', {}).get('is_member'):
+        return True
+    else:
+        print(f"App not integrated or not a member of the channel with ID {channel_id}")
+        return False
+
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
     message_file_path = os.path.join(channel_dir, "messages.json")
