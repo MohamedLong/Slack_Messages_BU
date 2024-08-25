@@ -10,6 +10,7 @@ if not slack_token:
 
 list_url = 'https://slack.com/api/conversations.list'
 history_url = 'https://slack.com/api/conversations.history'
+replies_url = 'https://slack.com/api/conversations.replies'
 headers = {
     'Authorization': f'Bearer {slack_token}',
     'Content-Type': 'application/json',
@@ -35,7 +36,11 @@ def fetch_messages(channel_id):
         response = requests.get(history_url, headers=headers, params=params)
         data = response.json()
         if data.get('ok'):
-            messages.extend(data.get('messages', []))
+            for message in data.get('messages', []):
+                # Fetch replies for each message
+                replies = fetch_replies(channel_id, message['ts'])
+                message['replies'] = replies
+                messages.append(message)
             if data.get('response_metadata') and data['response_metadata'].get('next_cursor'):
                 params['cursor'] = data['response_metadata']['next_cursor']
                 time.sleep(1)  # To handle rate limits
@@ -45,6 +50,28 @@ def fetch_messages(channel_id):
             print("Error fetching messages:", data.get('error'))
             break
     return messages
+
+def fetch_replies(channel_id, thread_ts):
+    params = {
+        'channel': channel_id,
+        'ts': thread_ts,
+        'limit': 1000,  # Adjust as needed
+    }
+    replies = []
+    while True:
+        response = requests.get(replies_url, headers=headers, params=params)
+        data = response.json()
+        if data.get('ok'):
+            replies.extend(data.get('messages', []))
+            if data.get('response_metadata') and data['response_metadata'].get('next_cursor'):
+                params['cursor'] = data['response_metadata']['next_cursor']
+                time.sleep(1)  # To handle rate limits
+            else:
+                break
+        else:
+            print("Error fetching replies:", data.get('error'))
+            break
+    return replies
 
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
