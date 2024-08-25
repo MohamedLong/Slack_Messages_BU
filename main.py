@@ -45,7 +45,7 @@ def fetch_messages(channel_id):
             break
     return messages
 
-def download_file(file_info):
+def download_file(file_info, channel_name):
     file_url = file_info.get('url_private_download')
     if not file_url:
         return
@@ -58,7 +58,10 @@ def download_file(file_info):
     
     if response.status_code == 200:
         file_name = file_info.get('name', 'file')
-        file_path = os.path.join("BU", file_name)
+        # Create directory for channel if it doesn't exist
+        channel_dir = os.path.join("BU", channel_name)
+        os.makedirs(channel_dir, exist_ok=True)
+        file_path = os.path.join(channel_dir, file_name)
         
         with open(file_path, 'wb') as f:
             for chunk in response.iter_content(chunk_size=8192):
@@ -72,15 +75,21 @@ def download_file(file_info):
     return None
 
 def save_backup(channel_name, messages):
-    os.makedirs("BU", exist_ok=True)
+    # Create directory for channel if it doesn't exist
+    channel_dir = os.path.join("BU", channel_name)
+    os.makedirs(channel_dir, exist_ok=True)
     
+    # Save messages and download files
     for message in messages:
+        # Save message as a JSON file
+        message_file_path = os.path.join(channel_dir, 'messages.json')
+        with open(message_file_path, 'w') as f:
+            json.dump(messages, f, indent=2)
+        
+        # Download and save files
         if 'files' in message:
             for file_info in message['files']:
-                file_path = download_file(file_info)
-                if file_path:
-                    file_name = os.path.basename(file_path)
-                    print(f"File saved at: {file_path}")
+                download_file(file_info, channel_name)
 
 def main():
     channels = fetch_channels()
