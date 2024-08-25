@@ -75,6 +75,15 @@ def fetch_replies(channel_id, thread_ts):
             break
     return replies
 
+def check_if_app_installed(channel_id):
+    # This is a simplified check. You might need a more specific method based on your app's installation.
+    # Here we assume the app posts messages or files with a specific pattern or tag.
+    messages = fetch_messages(channel_id)
+    for message in messages:
+        if 'text' in message and 'YourAppTag' in message['text']:
+            return True
+    return False
+
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
     message_file_path = os.path.join(channel_dir, "messages.json")
@@ -141,12 +150,14 @@ def download_file(file_info, channel_name):
 def main():
     channels = fetch_channels()
     for channel in channels:
-        if channel['name'] == "teamway":  # For testing, use your condition
-            channel_id = channel['id']
-            channel_name = channel['name']
+        channel_id = channel['id']
+        channel_name = channel['name']
+        if check_if_app_installed(channel_id):
             print(f"Fetching messages for channel: {channel_name} ({channel_id})")
             new_messages = fetch_messages(channel_id)
             save_backup(channel_name, new_messages)
+        else:
+            print(f"App not installed in channel: {channel_name} ({channel_id})")
 
 if __name__ == "__main__":
     main()
