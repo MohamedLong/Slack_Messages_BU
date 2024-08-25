@@ -134,8 +134,13 @@ def save_backup(channel_name, new_messages):
                 download_file(file_info, channel_name)
 
 def download_file(file_info, channel_name):
+    # Check if 'url_private' exists in file_info
+    if 'url_private' not in file_info:
+        print(f"Warning: 'url_private' not found in file_info: {file_info}")
+        return
+
     file_url = file_info['url_private']
-    file_name = file_info['name']
+    file_name = file_info.get('name', 'unknown_file')
     file_path = os.path.join("BU", channel_name, file_name)
     
     # Check if the file already exists
@@ -154,6 +159,7 @@ def download_file(file_info, channel_name):
         print(f"File downloaded: {file_path}")
     else:
         print(f"Failed to download file: {response.status_code}, {response.text}")
+
 
 def main():
     # Fetch public and private channels
