@@ -11,7 +11,6 @@ if not slack_token:
 list_url = 'https://slack.com/api/conversations.list'
 history_url = 'https://slack.com/api/conversations.history'
 replies_url = 'https://slack.com/api/conversations.replies'
-info_url = 'https://slack.com/api/conversations.info'
 headers = {
     'Authorization': f'Bearer {slack_token}',
     'Content-Type': 'application/json',
@@ -76,10 +75,10 @@ def fetch_replies(channel_id, thread_ts):
             break
     return replies
 
-def check_if_app_installed(channel_id):
-    # Check if the app is mentioned in the channel's messages
+def check_app_interactions(channel_id):
     messages = fetch_messages(channel_id)
     for message in messages:
+        # Check if the app's interactions are present
         if 'text' in message and 'Message Backup App' in message['text']:
             return True
     return False
@@ -152,12 +151,12 @@ def main():
     for channel in channels:
         channel_id = channel['id']
         channel_name = channel['name']
-        if check_if_app_installed(channel_id):
+        if check_app_interactions(channel_id):
             print(f"Fetching messages for channel: {channel_name} ({channel_id})")
             new_messages = fetch_messages(channel_id)
             save_backup(channel_name, new_messages)
         else:
-            print(f"App not installed in channel: {channel_name} ({channel_id})")
+            print(f"App not interacting in channel: {channel_name} ({channel_id})")
 
 if __name__ == "__main__":
     main()
