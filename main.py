@@ -35,7 +35,6 @@ def fetch_messages(channel_id):
         data = response.json()
         if data.get('ok'):
             messages.extend(data.get('messages', []))
-            # Check if there's more messages to fetch
             if data.get('response_metadata') and data['response_metadata'].get('next_cursor'):
                 params['cursor'] = data['response_metadata']['next_cursor']
                 time.sleep(1)  # To handle rate limits
@@ -46,8 +45,8 @@ def fetch_messages(channel_id):
             break
     return messages
 
-def download_file(file_info, channel_name):
-    file_url = file_info.get('url_private')
+def download_file(file_info):
+    file_url = file_info.get('url_private_download')
     if not file_url:
         return
     
@@ -55,61 +54,43 @@ def download_file(file_info, channel_name):
         'Authorization': f'Bearer {slack_token}',
     }
     
-    response = requests.get(file_url, headers=headers)
+    response = requests.get(file_url, headers=headers, stream=True)
     
     if response.status_code == 200:
-        # Extract file extension and create a filename
-        file_extension = os.path.splitext(file_info.get('name', ''))[1]
-        if not file_extension:
-            file_extension = '.bin'  # Use a default binary extension if none is provided
-        
-        # Create directory for channel media if it doesn't exist
-        media_dir = f"BU/{channel_name}_media"
-        os.makedirs(media_dir, exist_ok=True)
-        
-        # Save file with a unique name
-        file_name = f"{file_info['id']}{file_extension}"
-        file_path = os.path.join(media_dir, file_name)
+        file_name = file_info.get('name', 'file')
+        file_path = os.path.join("BU", file_name)
         
         with open(file_path, 'wb') as f:
-            f.write(response.content)
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
         
         print(f"Downloaded: {file_path}")
+        return file_path
     else:
         print(f"Failed to download file: {file_info['name']} (status code: {response.status_code})")
-
-
-
+    return None
 
 def save_backup(channel_name, messages):
-    filename = f"BU/{channel_name}.json"
-    with open(filename, 'w') as f:
-        json.dump(messages, f, indent=2)
-    print(f"Backup saved to {filename}")
+    os.makedirs("BU", exist_ok=True)
+    
+    for message in messages:
+        if 'files' in message:
+            for file_info in message['files']:
+                file_path = download_file(file_info)
+                if file_path:
+                    file_name = os.path.basename(file_path)
+                    print(f"File saved at: {file_path}")
 
 def main():
     channels = fetch_channels()
     for channel in channels:
-        channel_id = channel['id']
-        channel_name = channel['name']
-        
-        # Only fetch messages for the "teamway" channel
-        if channel_name == "teamway":
+        if channel['name'] == 'teamway':  # Filter by channel name
+            channel_id = channel['id']
+            channel_name = channel['name']
             print(f"Fetching messages for channel: {channel_name} ({channel_id})")
             messages = fetch_messages(channel_id)
             save_backup(channel_name, messages)
-            
-            # Download media files if any
-            for message in messages:
-                if 'files' in message:
-                    for file_info in message['files']:
-                        download_file(file_info, channel_name)
-        else:
-            print(f"Skipping channel: {channel_name}")
-
-
-
-
 
 if __name__ == "__main__":
     main()
