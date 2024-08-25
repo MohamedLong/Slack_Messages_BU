@@ -11,6 +11,7 @@ if not slack_token:
 list_url = 'https://slack.com/api/conversations.list'
 history_url = 'https://slack.com/api/conversations.history'
 replies_url = 'https://slack.com/api/conversations.replies'
+info_url = 'https://slack.com/api/conversations.info'
 headers = {
     'Authorization': f'Bearer {slack_token}',
     'Content-Type': 'application/json',
@@ -76,11 +77,10 @@ def fetch_replies(channel_id, thread_ts):
     return replies
 
 def check_if_app_installed(channel_id):
-    # This is a simplified check. You might need a more specific method based on your app's installation.
-    # Here we assume the app posts messages or files with a specific pattern or tag.
+    # Check if the app is mentioned in the channel's messages
     messages = fetch_messages(channel_id)
     for message in messages:
-        if 'text' in message and 'YourAppTag' in message['text']:
+        if 'text' in message and 'Message Backup App' in message['text']:
             return True
     return False
 
