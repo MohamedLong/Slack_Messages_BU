@@ -16,7 +16,7 @@ headers = {
     'Content-Type': 'application/json',
 }
 
-def fetch_channels(types='public_channel,private_channel'):
+def fetch_channels(types='public_channel,private_channel,im,mpim'):
     params = {'types': types}
     response = requests.get(list_url, headers=headers, params=params)
     data = response.json()
@@ -160,31 +160,18 @@ def download_file(file_info, channel_name):
     else:
         print(f"Failed to download file: {response.status_code}, {response.text}")
 
-
 def main():
     # Fetch public and private channels
-    channels = fetch_channels(types='public_channel,private_channel')
+    channels = fetch_channels(types='public_channel,private_channel,im,mpim')
     for channel in channels:
         channel_id = channel['id']
-        channel_name = channel['name']
+        channel_name = channel.get('name', 'unknown_channel')
         if check_app_integration(channel_id):
             print(f"Fetching messages for channel: {channel_name} ({channel_id})")
             new_messages = fetch_messages(channel_id)
             save_backup(channel_name, new_messages)
         else:
             print(f"App not integrated in channel: {channel_name} ({channel_id})")
-    
-    # Fetch direct message channels
-    dm_channels = fetch_channels(types='im')
-    for dm_channel in dm_channels:
-        channel_id = dm_channel['id']
-        channel_name = dm_channel.get('user', 'direct_message')
-        if check_app_integration(channel_id):
-            print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
-            new_messages = fetch_messages(channel_id)
-            save_backup(channel_name, new_messages)
-        else:
-            print(f"App not integrated in direct message channel: {channel_name} ({channel_id})")
 
 if __name__ == "__main__":
     main()
