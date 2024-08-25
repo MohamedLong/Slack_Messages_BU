@@ -11,6 +11,7 @@ if not slack_token:
 list_url = 'https://slack.com/api/conversations.list'
 history_url = 'https://slack.com/api/conversations.history'
 replies_url = 'https://slack.com/api/conversations.replies'
+user_info_url = 'https://slack.com/api/users.info'
 headers = {
     'Authorization': f'Bearer {slack_token}',
     'Content-Type': 'application/json',
@@ -91,6 +92,15 @@ def check_app_integration(channel_id):
     else:
         print(f"App not integrated or not a member of the channel with ID {channel_id}")
         return False
+
+def fetch_user_name(user_id):
+    response = requests.get(f'{user_info_url}?user={user_id}', headers=headers)
+    data = response.json()
+    if data.get('ok'):
+        return data.get('user', {}).get('name', 'unknown_user')
+    else:
+        print(f"Error fetching user info for user_id {user_id}: {data.get('error')}")
+        return 'unknown_user'
 
 def fetch_existing_messages(channel_name):
     channel_dir = os.path.join("BU", channel_name)
@@ -178,7 +188,8 @@ def main():
     for dm_channel in dm_channels:
         channel_id = dm_channel['id']
         user_id = dm_channel.get('user', 'direct_message')
-        channel_name = f"dm_{user_id}"  # Use user_id to uniquely identify DM channels
+        user_name = fetch_user_name(user_id)
+        channel_name = f"dm_{user_name}"  # Use user_name for DM channels
         print(f"Fetching direct messages for channel: {channel_name} ({channel_id})")
         new_messages = fetch_messages(channel_id)
         save_backup(channel_name, new_messages)
