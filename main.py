@@ -18,17 +18,17 @@ headers = {
 def fetch_channels():
     response = requests.get(list_url, headers=headers)
     data = response.json()
-
     if data.get('ok'):
         return data.get('channels', [])
     else:
         print("Error:", data.get('error'))
         return []
 
-def fetch_messages(channel_id):
+def fetch_messages(channel_id, latest=None):
     params = {
         'channel': channel_id,
-        'limit': 1000,  # Adjust as needed
+        'limit': 1000,
+        'latest': latest
     }
     messages = []
     while True:
@@ -38,7 +38,7 @@ def fetch_messages(channel_id):
             messages.extend(data.get('messages', []))
             if data.get('response_metadata') and data['response_metadata'].get('next_cursor'):
                 params['cursor'] = data['response_metadata']['next_cursor']
-                time.sleep(1)  # To handle rate limits
+                time.sleep(1)
             else:
                 break
         else:
@@ -46,67 +46,40 @@ def fetch_messages(channel_id):
             break
     return messages
 
-def fetch_existing_messages(channel_name):
-    channel_dir = os.path.join("BU", channel_name)
-    message_file_path = os.path.join(channel_dir, "messages.json")
+def save_backup(channel_name, messages):
+    filename = f"BU/{channel_name}.json"
+    existing_messages = []
     
-    if os.path.exists(message_file_path):
-        with open(message_file_path, 'r') as f:
-            return json.load(f)
-    return []
-
-def save_backup(channel_name, new_messages):
-    channel_dir = os.path.join("BU", channel_name)
-    os.makedirs(channel_dir, exist_ok=True)
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            existing_messages = json.load(f)
     
-    existing_messages = fetch_existing_messages(channel_name)
-    all_messages = existing_messages + new_messages
+    existing_messages_dict = {msg['ts']: msg for msg in existing_messages}
+    existing_timestamps = sorted(existing_messages_dict.keys())
     
-    # Remove duplicates based on timestamp or any unique identifier if needed
-    seen_message_ids = set()
-    unique_messages = []
-    for message in all_messages:
-        message_id = message.get('ts')  # Assuming 'ts' is the unique identifier for messages
-        if message_id not in seen_message_ids:
-            seen_message_ids.add(message_id)
-            unique_messages.append(message)
+    # Create a dictionary of new messages indexed by timestamp
+    new_messages_dict = {msg['ts']: msg for msg in messages}
     
-    # Save combined unique messages
-    message_file_path = os.path.join(channel_dir, "messages.json")
-    with open(message_file_path, 'w') as f:
-        json.dump(unique_messages, f, indent=2)
+    # Merge existing and new messages while preserving order
+    all_timestamps = sorted(set(existing_timestamps) | set(new_messages_dict.keys()))
+    all_messages = [existing_messages_dict.get(ts, new_messages_dict.get(ts)) for ts in all_timestamps]
     
-    print(f"Backup updated at {message_file_path}")
-
-    # Download files if present
-    for message in new_messages:
-        if 'files' in message:
-            for file_info in message['files']:
-                download_file(file_info, channel_name)
-
-def download_file(file_info, channel_name):
-    file_url = file_info['url_private']
-    file_name = file_info['name']
-    file_path = os.path.join("BU", channel_name, file_name)
-    
-    response = requests.get(file_url, headers={'Authorization': f'Bearer {slack_token}'}, stream=True)
-    if response.status_code == 200:
-        with open(file_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-        print(f"File downloaded: {file_path}")
-    else:
-        print(f"Failed to download file: {response.status_code}, {response.text}")
+    with open(filename, 'w') as f:
+        json.dump(all_messages, f, indent=2)
+    print(f"Backup updated in {filename}")
 
 def main():
     channels = fetch_channels()
     for channel in channels:
-        if channel['name'] == "teamway":  # For testing, use your condition
-            channel_id = channel['id']
-            channel_name = channel['name']
-            print(f"Fetching messages for channel: {channel_name} ({channel_id})")
-            new_messages = fetch_messages(channel_id)
-            save_backup(channel_name, new_messages)
+        channel_id = channel['id']
+        channel_name = channel['name']
+        print(f"Fetching messages for channel: {channel_name} ({channel_id})")
+        
+        # Fetch the latest messages
+        messages = fetch_messages(channel_id)
+        
+        # Save backup
+        save_backup(channel_name, messages)
 
 if __name__ == "__main__":
     main()
