@@ -58,22 +58,26 @@ def download_file(file_info, channel_name):
     response = requests.get(file_url, headers=headers)
     
     if response.status_code == 200:
-        # Determine file extension
+        # Extract file extension and create a filename
         file_extension = os.path.splitext(file_info.get('name', ''))[1]
         if not file_extension:
-            file_extension = '.bin'  # Default if no extension found
+            file_extension = '.bin'  # Use a default binary extension if none is provided
         
         # Create directory for channel media if it doesn't exist
         media_dir = f"BU/{channel_name}_media"
         os.makedirs(media_dir, exist_ok=True)
         
-        # Save file
-        file_path = os.path.join(media_dir, f"{file_info['id']}{file_extension}")
+        # Save file with a unique name
+        file_name = f"{file_info['id']}{file_extension}"
+        file_path = os.path.join(media_dir, file_name)
+        
         with open(file_path, 'wb') as f:
             f.write(response.content)
+        
         print(f"Downloaded: {file_path}")
     else:
-        print(f"Failed to download file: {file_info['name']}")
+        print(f"Failed to download file: {file_info['name']} (status code: {response.status_code})")
+
 
 
 
