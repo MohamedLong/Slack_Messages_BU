@@ -35,7 +35,7 @@ The Slack Message Backup Tool is designed to help free Slack users who lose thei
     export SLACK_TOKEN='your-slack-token'
     ```
 
-## Usage
+# Usage
 
 1. **Run the Backup Tool**
 
@@ -63,7 +63,7 @@ The Slack Message Backup Tool is designed to help free Slack users who lose thei
     0 22 * * * /path/to/your/python /path/to/slack-message-backup/main.py
     ```
 
-## Permissions
+# Permissions
 
 Ensure your Slack OAuth token has the following scopes:
 
@@ -74,11 +74,11 @@ Ensure your Slack OAuth token has the following scopes:
 
 Configure these permissions in your Slack app settings. For more information, refer to Slack’s [OAuth Scopes Documentation](https://api.slack.com/scopes).
 
-## Troubleshooting
+# Troubleshooting
 
 - **Error: `missing_scope`**: Ensure your token has the required scopes.
 - **Empty Messages**: Verify your Slack token has access to the channels and they are correctly listed in your workspace.
 
-## Contributing
+# Contributing
 
 If you have suggestions or improvements, feel free to create a pull request or open an issue.
