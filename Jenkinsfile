@@ -5,7 +5,7 @@ pipeline {
 
     environment {
         SLACK_TOKEN = credentials('slack-token') // Use the credential ID for your Slack token
-        NOTIFY_EMAIL = credentials('NOTIFY_EMAIL') // Use the credential ID for your notification email
+        NOTIFY_EMAIL = credentials('email') // Use the credential ID for your notification email
     }
 
     stages {
@@ -58,7 +58,7 @@ pipeline {
                         [$class: 'RequesterRecipientProvider']
                     ],
                     // replyTo: "${env.EMAIL_RECIPIENTS}",
-                    to: '${NOTIFY_EMAIL}'
+                    to: "${env.NOTIFY_EMAIL}"
         }
-    }
+    }s
 }
