@@ -58,7 +58,7 @@ pipeline {
                         [$class: 'RequesterRecipientProvider']
                     ],
                     // replyTo: "${env.EMAIL_RECIPIENTS}",
-                    to: "${env.NOTIFY_EMAIL}"
+                    to: '${NOTIFY_EMAIL}'
         }
     }
 }
