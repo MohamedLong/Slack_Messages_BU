@@ -44,9 +44,9 @@ pipeline {
             archiveArtifacts artifacts: '**/*.json', allowEmptyArchive: true
 
             // Send email notification
-            emailext subject: "Jenkins Build: ${currentBuild.fullDisplayName}",
-                     body: "Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}",
-                     to: "${NOTIFY_EMAIL}"
+            // emailext subject: "Jenkins Build: ${currentBuild.fullDisplayName}",
+            //          body: "Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}",
+            //          to: "${NOTIFY_EMAIL}"
 
 
             emailext subject: 'Jenkins Build: ${currentBuild.fullDisplayName}',
