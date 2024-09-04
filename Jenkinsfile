@@ -1,15 +1,17 @@
 pipeline {
-    agent any
+    agent {
+        label 'spring'
+    }
 
     environment {
         SLACK_TOKEN = credentials('slack-token') // Use the credential ID for your Slack token
+        NOTIFY_EMAIL = credentials('NOTIFY_EMAIL') // Use the credential ID for your notification email
     }
 
     stages {
         stage('Checkout Repository') {
             steps {
                 // Clone the GitHub repository containing the backup script
-                // git 'https://github.com/your-repo/backup-scripts.git'
                 git branch: 'main', credentialsId: 'long_jenkins', url: 'https://github.com/MohamedLong/Slack_Messages_BU.git'
             }
         }
@@ -40,6 +42,11 @@ pipeline {
         always {
             // Archive backup files or perform any cleanup if necessary
             archiveArtifacts artifacts: '**/*.json', allowEmptyArchive: true
+
+            // Send email notification
+            emailext subject: "Jenkins Build: ${currentBuild.fullDisplayName}",
+                     body: "Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}",
+                     to: "${NOTIFY_EMAIL}"
         }
     }
 }
