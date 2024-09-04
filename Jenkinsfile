@@ -42,13 +42,6 @@ pipeline {
         always {
             // Archive backup files or perform any cleanup if necessary
             archiveArtifacts artifacts: '**/*.json', allowEmptyArchive: true
-
-            // Send email notification
-            // emailext subject: "Jenkins Build: ${currentBuild.fullDisplayName}",
-            //          body: "Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}",
-            //          to: "${NOTIFY_EMAIL}"
-
-
             emailext subject: 'Jenkins Build: ${currentBuild.fullDisplayName}',
                     attachLog: true,
                     body: 'Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}',
@@ -57,8 +50,7 @@ pipeline {
                         [$class: 'DevelopersRecipientProvider'],
                         [$class: 'RequesterRecipientProvider']
                     ],
-                    // replyTo: "${env.EMAIL_RECIPIENTS}",
-                    to: "${env.NOTIFY_EMAIL}"
+                    to: '${NOTIFY_EMAIL}'
         }
     }
 }
