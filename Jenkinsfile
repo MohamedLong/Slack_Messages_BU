@@ -47,6 +47,18 @@ pipeline {
             emailext subject: "Jenkins Build: ${currentBuild.fullDisplayName}",
                      body: "Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}",
                      to: "${NOTIFY_EMAIL}"
+
+
+            emailext subject: 'Jenkins Build: ${currentBuild.fullDisplayName}',
+                    attachLog: true,
+                    body: 'Build finished with status: ${currentBuild.currentResult}\nCheck details at: ${env.BUILD_URL}',
+                    recipientProviders: [
+                        [$class: 'CulpritsRecipientProvider'],
+                        [$class: 'DevelopersRecipientProvider'],
+                        [$class: 'RequesterRecipientProvider']
+                    ],
+                    // replyTo: "${env.EMAIL_RECIPIENTS}",
+                    to: "${env.NOTIFY_EMAIL}"
         }
     }
 }
