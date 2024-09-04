@@ -60,5 +60,5 @@ pipeline {
                     // replyTo: "${env.EMAIL_RECIPIENTS}",
                     to: "${env.NOTIFY_EMAIL}"
         }
-    }s
+    }
 }
